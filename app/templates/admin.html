@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+    <h2>Set Available Slots</h2>
+    <form action="{{ url_for('admin_settings') }}" method="post">
+        Date: <input type="date" name="available_date"><br>
+        Time: <input type="time" name="available_time"><br>
+        <button type="submit">Set</button>
+    </form>
+
+    <h2>Current Reservations</h2>
+    <ul>
+        {% for reservation in reservations %}
+            <li>{{ reservation.datetime }} - {{ reservation.name }} ({{ reservation.phone }}) - {{ reservation.status }}
+                <form action="{{ url_for('admin_cancel') }}" method="post" style="display:inline;">
+                    <input type="hidden" name="reservation_id" value="{{ reservation.id }}">
+                    <button type="submit">Cancel</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
