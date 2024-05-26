@@ -1,4 +1,5 @@
 from app import db
+import datetime
 
 class Reservation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -7,6 +8,9 @@ class Reservation(db.Model):
     password = db.Column(db.String(128))
     datetime = db.Column(db.DateTime, index=True)
     status = db.Column(db.String(20))
+    canceled_at = db.Column(db.DateTime, nullable=True)
+    canceled_by = db.Column(db.String(20), nullable=True)
+    event_id = db.Column(db.String(128), nullable=True)
 
 class CalendarSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)

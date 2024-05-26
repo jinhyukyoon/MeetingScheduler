@@ -5,11 +5,20 @@
     <title>Admin Dashboard</title>
 </head>
 <body>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class="flashes">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
     <h1>Admin Dashboard</h1>
     <h2>Set Available Slots</h2>
     <form action="{{ url_for('admin_settings') }}" method="post">
-        Date: <input type="date" name="available_date"><br>
-        Time: <input type="time" name="available_time"><br>
+        Date: <input type="date" name="available_date" required><br>
+        Time: <input type="time" name="available_time" required><br>
         <button type="submit">Set</button>
     </form>
 
@@ -17,10 +26,12 @@
     <ul>
         {% for reservation in reservations %}
             <li>{{ reservation.datetime }} - {{ reservation.name }} ({{ reservation.phone }}) - {{ reservation.status }}
-                <form action="{{ url_for('admin_cancel') }}" method="post" style="display:inline;">
-                    <input type="hidden" name="reservation_id" value="{{ reservation.id }}">
-                    <button type="submit">Cancel</button>
-                </form>
+                {% if reservation.status == 'reserved' %}
+                    <form action="{{ url_for('admin_cancel') }}" method="post" style="display:inline;">
+                        <input type="hidden" name="reservation_id" value="{{ reservation.id }}">
+                        <button type="submit">Cancel</button>
+                    </form>
+                {% endif %}
             </li>
         {% endfor %}
     </ul>
