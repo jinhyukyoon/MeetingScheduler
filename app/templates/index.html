@@ -3,6 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <title>User Reservation</title>
+    <style>
+        .table-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+        .table-wrapper {
+            flex: 1 1 30%;
+            margin: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        @media screen and (max-width: 600px) {
+            .table-wrapper {
+                flex: 1 1 100%;
+            }
+        }
+    </style>
 </head>
 <body>
     {% with messages = get_flashed_messages() %}
@@ -20,9 +48,31 @@
         Phone: <input type="text" name="phone" required><br>
         Password: <input type="password" name="password" required><br>
         Available Slots:<br>
-        {% for slot in slots %}
-            <input type="radio" name="datetime" value="{{ slot.available_date }}T{{ slot.available_time }}" required> {{ slot.available_date }} {{ slot.available_time }}<br>
-        {% endfor %}
+        <div class="table-container">
+            {% for year_month, slots in slots_by_year_month.items() %}
+                <div class="table-wrapper">
+                    <h3>{{ year_month }}</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Select</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for slot in slots %}
+                                <tr>
+                                    <td>{{ slot.available_date.strftime('%Y-%m-%d %a') }}</td>
+                                    <td>{{ slot.available_time }}</td>
+                                    <td><input type="radio" name="datetime" value="{{ slot.available_date }}T{{ slot.available_time }}" required></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endfor %}
+        </div>
         <button type="submit">Reserve</button>
     </form>
 
@@ -32,12 +82,5 @@
         Password: <input type="password" name="password" required><br>
         <button type="submit">Cancel</button>
     </form>
-
-    <h2>Available Slots</h2>
-    <ul>
-        {% for slot in slots %}
-            <li>{{ slot.available_date }} {{ slot.available_time }}</li>
-        {% endfor %}
-    </ul>
 </body>
 </html>

@@ -3,6 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin Dashboard</title>
+    <script>
+        function toggleEndDate() {
+            var repeat = document.getElementById("repeat").value;
+            var endDateField = document.getElementById("end_date_field");
+            if (repeat === "none") {
+                endDateField.style.display = "none";
+            } else {
+                endDateField.style.display = "block";
+            }
+        }
+        function validateForm() {
+            var repeat = document.getElementById("repeat").value;
+            var endDate = document.getElementById("end_date").value;
+            if (repeat !== "none" && endDate === "") {
+                alert("Please provide an end date for the repetition.");
+                return false;
+            }
+            return true;
+        }
+        function updateWeekday() {
+            var dateInput = document.getElementById("available_date");
+            var dateValue = new Date(dateInput.value);
+            var options = { weekday: 'short' };
+            var weekday = new Intl.DateTimeFormat('en-US', options).format(dateValue);
+            document.getElementById("weekday_display").innerText = isNaN(dateValue) ? '' : weekday;
+        }
+        window.onload = function() {
+            toggleEndDate(); // Initialize visibility on page load
+            updateWeekday(); // Initialize weekday display on page load
+        }
+    </script>
 </head>
 <body>
     {% with messages = get_flashed_messages() %}
@@ -16,16 +47,27 @@
     {% endwith %}
     <h1>Admin Dashboard</h1>
     <h2>Set Available Slots</h2>
-    <form action="{{ url_for('admin_settings') }}" method="post">
-        Date: <input type="date" name="available_date" required><br>
+    <form action="{{ url_for('admin_settings') }}" method="post" onsubmit="return validateForm()">
+        Date: <input type="date" name="available_date" id="available_date" required onchange="updateWeekday()">
+        <span id="weekday_display"></span><br>
         Time: <input type="time" name="available_time" required><br>
+        Repeat: 
+        <select name="repeat" id="repeat" onchange="toggleEndDate()">
+            <option value="none">No Repeat</option>
+            <option value="daily">Once a Day (Mon-Fri)</option>
+            <option value="weekly">Once a Week</option>
+            <option value="monthly">Once a Month</option>
+        </select><br>
+        <div id="end_date_field" style="display:none;">
+            End Date for Repetition: <input type="date" name="end_date" id="end_date"><br>
+        </div>
         <button type="submit">Set</button>
     </form>
 
     <h2>Current Reservations</h2>
     <ul>
         {% for reservation in reservations %}
-            <li>{{ reservation.datetime }} - {{ reservation.name }} ({{ reservation.phone }}) - {{ reservation.status }}
+            <li>{{ reservation.datetime.strftime('%Y-%m-%d %a %H:%M:%S') }} - {{ reservation.name }} ({{ reservation.phone }}) - {{ reservation.status }}
                 {% if reservation.status == 'reserved' %}
                     <form action="{{ url_for('admin_cancel') }}" method="post" style="display:inline;">
                         <input type="hidden" name="reservation_id" value="{{ reservation.id }}">

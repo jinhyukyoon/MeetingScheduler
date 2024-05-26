@@ -10,10 +10,93 @@ logging.basicConfig(level=logging.INFO)
 
 @app.route('/')
 def index():
-    # Fetch only available slots
     available_slots = CalendarSettings.query.all()
-    logging.info(f"Available slots: {available_slots}")
-    return render_template('index.html', slots=available_slots)
+    slots_by_year_month = {}
+    for slot in available_slots:
+        year_month = slot.available_date.strftime('%Y-%m')
+        if year_month not in slots_by_year_month:
+            slots_by_year_month[year_month] = []
+        slots_by_year_month[year_month].append(slot)
+    return render_template('index.html', slots_by_year_month=slots_by_year_month)
+
+@app.route('/admin')
+def admin():
+    reservations = Reservation.query.all()
+    return render_template('admin.html', reservations=reservations)
+
+@app.route('/admin/settings', methods=['POST'])
+def admin_settings():
+    available_date = request.form['available_date']
+    available_time = request.form['available_time']
+    repeat = request.form['repeat']
+    end_date_str = request.form['end_date']
+
+    try:
+        start_date = datetime.datetime.strptime(available_date, '%Y-%m-%d').date()
+        time = datetime.datetime.strptime(available_time, '%H:%M').time()
+        end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else None
+    except ValueError as e:
+        logging.error(f"Date format error: {e}")
+        flash('Invalid date format.')
+        return redirect(url_for('admin'))
+
+    if repeat != 'none' and not end_date:
+        flash('Please provide an end date for the repetition.')
+        return redirect(url_for('admin'))
+
+    current_date = start_date
+
+    while True:
+        if repeat == 'daily' and current_date.weekday() >= 5:  # Skip weekends
+            current_date += datetime.timedelta(days=1)
+            continue
+
+        calendar_setting = CalendarSettings(available_date=current_date, available_time=time)
+        db.session.add(calendar_setting)
+        
+        if repeat == 'none':
+            break
+        elif repeat == 'daily':
+            current_date += datetime.timedelta(days=1)
+        elif repeat == 'weekly':
+            current_date += datetime.timedelta(weeks=1)
+        elif repeat == 'monthly':
+            current_date = (current_date.replace(day=1) + datetime.timedelta(days=32)).replace(day=current_date.day)
+
+        if end_date and current_date > end_date:
+            break
+
+    db.session.commit()
+    flash('Calendar settings updated.')
+    return redirect(url_for('admin'))
+
+@app.route('/admin/cancel', methods=['POST'])
+def admin_cancel():
+    reservation_id = request.form['reservation_id']
+    reservation = Reservation.query.get(reservation_id)
+    if reservation:
+        reservation.status = 'canceled'
+        reservation.canceled_at = datetime.datetime.utcnow()
+        reservation.canceled_by = 'admin'
+        db.session.commit()
+
+        # Delete the event from Google Calendar
+        if reservation.event_id:
+            delete_event(reservation.event_id)
+
+        # # Send SMS to user
+        # try:
+        #     send_sms(reservation.phone, 'Your reservation has been canceled by admin.')
+        # except Exception as e:
+        #     logging.error(f"Error sending SMS: {e}")
+
+        # TODO: Send KakaoTalk message to admin
+
+        flash('Reservation canceled.')
+    else:
+        flash('Invalid reservation.')
+
+    return redirect(url_for('admin'))
 
 @app.route('/reserve', methods=['POST'])
 def reserve():
@@ -31,7 +114,6 @@ def reserve():
 
     # Check if the slot is still available
     existing_reservation = Reservation.query.filter_by(datetime=reservation_datetime, status='reserved').first()
-    logging.info(f"Existing reservation: {existing_reservation}")
     if existing_reservation:
         flash('This slot is already reserved.')
         return redirect(url_for('index'))
@@ -44,7 +126,6 @@ def reserve():
         
         # Remove the reserved slot from available slots
         slot_to_remove = CalendarSettings.query.filter_by(available_date=reservation_datetime.date(), available_time=reservation_datetime.time()).first()
-        logging.info(f"Slot to remove: {slot_to_remove}")
         if slot_to_remove:
             db.session.delete(slot_to_remove)
             db.session.commit()
@@ -76,7 +157,6 @@ def reserve():
     
     return redirect(url_for('index'))
 
-
 @app.route('/cancel', methods=['POST'])
 def cancel():
     reservation_id = request.form['reservation_id']
@@ -106,48 +186,3 @@ def cancel():
         flash('Invalid reservation or password.')
 
     return redirect(url_for('index'))
-
-@app.route('/admin')
-def admin():
-    reservations = Reservation.query.all()
-    return render_template('admin.html', reservations=reservations)
-
-@app.route('/admin/settings', methods=['POST'])
-def admin_settings():
-    available_date = request.form['available_date']
-    available_time = request.form['available_time']
-
-    calendar_setting = CalendarSettings(available_date=available_date, available_time=available_time)
-    db.session.add(calendar_setting)
-    db.session.commit()
-
-    flash('Calendar settings updated.')
-    return redirect(url_for('admin'))
-
-@app.route('/admin/cancel', methods=['POST'])
-def admin_cancel():
-    reservation_id = request.form['reservation_id']
-    reservation = Reservation.query.get(reservation_id)
-    if reservation:
-        reservation.status = 'canceled'
-        reservation.canceled_at = datetime.datetime.utcnow()
-        reservation.canceled_by = 'admin'
-        db.session.commit()
-
-        # Delete the event from Google Calendar
-        if reservation.event_id:
-            delete_event(reservation.event_id)
-
-        # # Send SMS to user
-        # try:
-        #     send_sms(reservation.phone, 'Your reservation has been canceled by admin.')
-        # except Exception as e:
-        #     logging.error(f"Error sending SMS: {e}")
-
-        # TODO: Send KakaoTalk message to admin
-
-        flash('Reservation canceled.')
-    else:
-        flash('Invalid reservation.')
-
-    return redirect(url_for('admin'))
