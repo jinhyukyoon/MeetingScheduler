@@ -7,7 +7,7 @@
                     <tr>
                         <th>Date</th>
                         <th>Time</th>
-                        <th>Select</th>
+                        <th>Reserve</th>
                         {% if is_admin %}
                             <th>Action</th>
                         {% endif %}
@@ -18,7 +18,13 @@
                         <tr>
                             <td>{{ slot.available_date.strftime('%Y-%m-%d %a') }}</td>
                             <td>{{ slot.available_time }}</td>
-                            <td><input type="radio" name="datetime" value="{{ slot.available_date }}T{{ slot.available_time }}" required></td>
+                            <td>
+                                {% if slot.reserved %}
+                                    Reserved
+                                {% else %}
+                                    <input type="radio" name="datetime" value="{{ slot.available_date }}T{{ slot.available_time }}" required>
+                                {% endif %}
+                            </td>
                             {% if is_admin %}
                                 <td>
                                     <form action="{{ url_for('admin_delete_slot') }}" method="post" style="display:inline;">

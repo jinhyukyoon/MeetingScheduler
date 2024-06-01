@@ -28,6 +28,8 @@ def index():
         year_month = slot.available_date.strftime('%Y-%m')
         if year_month not in slots_by_year_month:
             slots_by_year_month[year_month] = []
+        reservation = Reservation.query.filter_by(datetime=datetime.datetime.combine(slot.available_date, slot.available_time), status='reserved').first()
+        slot.reserved = reservation is not None
         slots_by_year_month[year_month].append(slot)
     return render_template('index.html', slots_by_year_month=slots_by_year_month)
 
@@ -39,6 +41,8 @@ def admin():
         year_month = slot.available_date.strftime('%Y-%m')
         if year_month not in slots_by_year_month:
             slots_by_year_month[year_month] = []
+        reservation = Reservation.query.filter_by(datetime=datetime.datetime.combine(slot.available_date, slot.available_time), status='reserved').first()
+        slot.reserved = reservation is not None
         slots_by_year_month[year_month].append(slot)
     reservations = Reservation.query.all()
     return render_template('admin.html', reservations=reservations, slots_by_year_month=slots_by_year_month, is_admin=True)
@@ -143,10 +147,10 @@ def reserve():
         db.session.add(reservation)
         db.session.commit()
         
-        # Remove the reserved slot from available slots
-        slot_to_remove = CalendarSettings.query.filter_by(available_date=reservation_datetime.date(), available_time=reservation_datetime.time()).first()
-        if slot_to_remove:
-            db.session.delete(slot_to_remove)
+        # Update the slot to show it is reserved
+        slot_to_update = CalendarSettings.query.filter_by(available_date=reservation_datetime.date(), available_time=reservation_datetime.time()).first()
+        if slot_to_update:
+            slot_to_update.reserved = True
             db.session.commit()
 
         # Create event in Google Calendar
@@ -192,6 +196,12 @@ def cancel():
         if reservation.event_id:
             delete_event(reservation.event_id)
         
+        # Update the slot to show it is available again
+        slot_to_update = CalendarSettings.query.filter_by(available_date=reservation.datetime.date(), available_time=reservation.datetime.time()).first()
+        if slot_to_update:
+            slot_to_update.reserved = False
+            db.session.commit()
+
         # # Send SMS to user
         # try:
         #     send_sms(reservation.phone, 'Your reservation has been canceled.')
