@@ -64,6 +64,9 @@
         <button type="submit">Set</button>
     </form>
 
+    <h2>Available Slots</h2>
+    {% include 'available_slot_setting.html' %}
+
     <h2>Current Reservations</h2>
     <ul>
         {% for reservation in reservations %}

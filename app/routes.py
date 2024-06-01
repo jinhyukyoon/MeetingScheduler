@@ -8,6 +8,18 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
+@app.route('/admin/delete_slot', methods=['POST'])
+def admin_delete_slot():
+    slot_id = request.form['slot_id']
+    slot = CalendarSettings.query.get(slot_id)
+    if slot:
+        db.session.delete(slot)
+        db.session.commit()
+        flash('Available slot deleted.')
+    else:
+        flash('Invalid slot.')
+    return redirect(url_for('admin'))
+
 @app.route('/')
 def index():
     available_slots = CalendarSettings.query.all()
@@ -21,8 +33,15 @@ def index():
 
 @app.route('/admin')
 def admin():
+    available_slots = CalendarSettings.query.all()
+    slots_by_year_month = {}
+    for slot in available_slots:
+        year_month = slot.available_date.strftime('%Y-%m')
+        if year_month not in slots_by_year_month:
+            slots_by_year_month[year_month] = []
+        slots_by_year_month[year_month].append(slot)
     reservations = Reservation.query.all()
-    return render_template('admin.html', reservations=reservations)
+    return render_template('admin.html', reservations=reservations, slots_by_year_month=slots_by_year_month, is_admin=True)
 
 @app.route('/admin/settings', methods=['POST'])
 def admin_settings():

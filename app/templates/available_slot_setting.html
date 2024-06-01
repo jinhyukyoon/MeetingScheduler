@@ -1,0 +1,36 @@
+<div class="table-container">
+    {% for year_month, slots in slots_by_year_month.items() %}
+        <div class="table-wrapper">
+            <h3>{{ year_month }}</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Select</th>
+                        {% if is_admin %}
+                            <th>Action</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for slot in slots %}
+                        <tr>
+                            <td>{{ slot.available_date.strftime('%Y-%m-%d %a') }}</td>
+                            <td>{{ slot.available_time }}</td>
+                            <td><input type="radio" name="datetime" value="{{ slot.available_date }}T{{ slot.available_time }}" required></td>
+                            {% if is_admin %}
+                                <td>
+                                    <form action="{{ url_for('admin_delete_slot') }}" method="post" style="display:inline;">
+                                        <input type="hidden" name="slot_id" value="{{ slot.id }}">
+                                        <button type="submit">Delete</button>
+                                    </form>
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endfor %}
+</div>
