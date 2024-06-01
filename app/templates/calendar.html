@@ -1,0 +1,135 @@
+<div class="calendar-container">
+    <div class="calendar-header">
+        <button onclick="changeMonth(-1)">Previous</button>
+        <h2 id="calendar-title"></h2>
+        <button onclick="changeMonth(1)">Next</button>
+    </div>
+    <div class="calendar" id="calendar">
+        <!-- Calendar cells will be injected here by JavaScript -->
+    </div>
+</div>
+
+<script>
+    const slots = {{ slots|tojson }};
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth();
+    const isAdmin = {{ is_admin|tojson|default('false') }};
+
+    function changeMonth(delta) {
+        currentMonth += delta;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        } else if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        generateCalendar(currentYear, currentMonth);
+    }
+
+    function generateCalendar(year, month) {
+        const calendar = document.getElementById('calendar');
+        const title = document.getElementById('calendar-title');
+        title.textContent = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+        calendar.innerHTML = '';
+        const date = new Date(year, month, 1);
+        const firstDay = date.getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        // Add empty cells for days before the first day of the month
+        for (let i = 0; i < firstDay; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.classList.add('day');
+            calendar.appendChild(emptyCell);
+        }
+
+        // Add cells for each day of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const cell = document.createElement('div');
+            cell.classList.add('day');
+            const header = document.createElement('div');
+            header.classList.add('day-header');
+            header.textContent = day;
+            cell.appendChild(header);
+
+            const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            if (slots[dateString]) {
+                // Sort slots by time
+                slots[dateString].sort((a, b) => a.time.localeCompare(b.time));
+                slots[dateString].forEach(slot => {
+                    const slotDiv = document.createElement('div');
+                    slotDiv.classList.add('slot');
+                    slotDiv.textContent = slot.time;
+                    slotDiv.title = slot.reserved ? 'Reserved' : 'Available';
+                    if (slot.reserved) {
+                        slotDiv.classList.add('reserved');
+                        if (isAdmin) {
+                            slotDiv.onclick = () => cancelReservation(slot.reservation_id);
+                        }
+                    } else {
+                        if (!isAdmin) {
+                            slotDiv.onclick = () => reserveSlot(dateString, slot.time);
+                        }
+                    }
+                    cell.appendChild(slotDiv);
+                });
+            }
+
+            calendar.appendChild(cell);
+        }
+    }
+
+    function reserveSlot(date, time) {
+        const datetime = `${date}T${time}`;
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/reserve';
+        form.style.display = 'none';
+
+        const datetimeInput = document.createElement('input');
+        datetimeInput.name = 'datetime';
+        datetimeInput.value = datetime;
+        form.appendChild(datetimeInput);
+
+        const name = prompt("Enter your name:");
+        const phone = prompt("Enter your phone:");
+        const password = prompt("Enter a password:");
+
+        const nameInput = document.createElement('input');
+        nameInput.name = 'name';
+        nameInput.value = name;
+        form.appendChild(nameInput);
+
+        const phoneInput = document.createElement('input');
+        phoneInput.name = 'phone';
+        phoneInput.value = phone;
+        form.appendChild(phoneInput);
+
+        const passwordInput = document.createElement('input');
+        passwordInput.name = 'password';
+        passwordInput.value = password;
+        form.appendChild(passwordInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function cancelReservation(reservationId) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/admin/cancel';
+        form.style.display = 'none';
+
+        const reservationIdInput = document.createElement('input');
+        reservationIdInput.name = 'reservation_id';
+        reservationIdInput.value = reservationId;
+        form.appendChild(reservationIdInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    // Initialize the calendar with the current month
+    generateCalendar(currentYear, currentMonth);
+</script>

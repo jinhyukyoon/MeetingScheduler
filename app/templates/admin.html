@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin Dashboard</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
     <script>
         function toggleEndDate() {
             var repeat = document.getElementById("repeat").value;
@@ -65,7 +66,7 @@
     </form>
 
     <h2>Available Slots</h2>
-    {% include 'available_slot_setting.html' %}
+    {% include 'calendar.html' %}
 
     <h2>Current Reservations</h2>
     <ul>

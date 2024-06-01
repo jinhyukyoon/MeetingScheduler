@@ -23,29 +23,35 @@ def admin_delete_slot():
 @app.route('/')
 def index():
     available_slots = CalendarSettings.query.all()
-    slots_by_year_month = {}
+    slots_by_date = {}
     for slot in available_slots:
-        year_month = slot.available_date.strftime('%Y-%m')
-        if year_month not in slots_by_year_month:
-            slots_by_year_month[year_month] = []
+        date_str = slot.available_date.strftime('%Y-%m-%d')
+        if date_str not in slots_by_date:
+            slots_by_date[date_str] = []
         reservation = Reservation.query.filter_by(datetime=datetime.datetime.combine(slot.available_date, slot.available_time), status='reserved').first()
-        slot.reserved = reservation is not None
-        slots_by_year_month[year_month].append(slot)
-    return render_template('index.html', slots_by_year_month=slots_by_year_month)
+        slots_by_date[date_str].append({
+            'time': slot.available_time.strftime('%H:%M:%S'),
+            'reserved': reservation is not None,
+            'reservation_id': reservation.id if reservation else None
+        })
+    return render_template('index.html', slots=slots_by_date, is_admin=False)
 
 @app.route('/admin')
 def admin():
     available_slots = CalendarSettings.query.all()
-    slots_by_year_month = {}
+    slots_by_date = {}
     for slot in available_slots:
-        year_month = slot.available_date.strftime('%Y-%m')
-        if year_month not in slots_by_year_month:
-            slots_by_year_month[year_month] = []
+        date_str = slot.available_date.strftime('%Y-%m-%d')
+        if date_str not in slots_by_date:
+            slots_by_date[date_str] = []
         reservation = Reservation.query.filter_by(datetime=datetime.datetime.combine(slot.available_date, slot.available_time), status='reserved').first()
-        slot.reserved = reservation is not None
-        slots_by_year_month[year_month].append(slot)
+        slots_by_date[date_str].append({
+            'time': slot.available_time.strftime('%H:%M:%S'),
+            'reserved': reservation is not None,
+            'reservation_id': reservation.id if reservation else None
+        })
     reservations = Reservation.query.all()
-    return render_template('admin.html', reservations=reservations, slots_by_year_month=slots_by_year_month, is_admin=True)
+    return render_template('admin.html', reservations=reservations, slots=slots_by_date, is_admin=True)
 
 @app.route('/admin/settings', methods=['POST'])
 def admin_settings():
