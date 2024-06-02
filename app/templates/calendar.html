@@ -55,11 +55,34 @@
 <div id="adminRemoveSlotModal" class="modal">
     <div class="modal-content">
         <span class="close" onclick="closeModal('adminRemoveSlotModal')">&times;</span>
-        <h2>Confirm Slot Removal</h2>
+        <h2 id="adminRemoveSlotTitle">Confirm Slot Removal</h2>
         <p id="adminRemoveSlotDetails"></p>
         <form id="adminRemoveSlotForm" method="post" action="/admin/delete_slot">
             <input type="hidden" id="admin_remove_slot_id" name="slot_id">
             <button type="submit">Confirm Removal</button>
+        </form>
+    </div>
+</div>
+
+<!-- Set Available Slot Modal for Admin -->
+<div id="adminSetSlotModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('adminSetSlotModal')">&times;</span>
+        <h2 id="adminSetSlotTitle">Set Available Slot</h2>
+        <form id="adminSetSlotForm" method="post" action="/admin/settings" onsubmit="return validateSetSlotForm()">
+            <input type="hidden" id="available_date" name="available_date">
+            Time: <input type="time" name="available_time" required><br>
+            Repeat: 
+            <select name="repeat" id="repeat" onchange="toggleEndDate()">
+                <option value="none">No Repeat</option>
+                <option value="daily">Once a Day (Mon-Fri)</option>
+                <option value="weekly">Once a Week</option>
+                <option value="monthly">Once a Month</option>
+            </select><br>
+            <div id="end_date_field" style="display:none;">
+                End Date for Repetition: <input type="date" name="end_date" id="end_date"><br>
+            </div>
+            <button type="submit">Set</button>
         </form>
     </div>
 </div>
@@ -106,6 +129,10 @@
             const header = document.createElement('div');
             header.classList.add('day-header');
             header.textContent = day;
+            if (isAdmin) {
+                header.classList.add('clickable');
+                header.onclick = () => openAdminSetSlotForm(year, month + 1, day);
+            }
             cell.appendChild(header);
 
             const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -126,7 +153,7 @@
                         }
                     } else {
                         if (isAdmin) {
-                            slotDiv.onclick = () => openAdminRemoveSlotForm(slot);
+                            slotDiv.onclick = () => openAdminRemoveSlotForm(slot, dateString);
                         } else {
                             slotDiv.onclick = () => openReservationForm(dateString, slot.time);
                         }
@@ -156,14 +183,42 @@
         document.getElementById('adminCancelModal').style.display = 'block';
     }
 
-    function openAdminRemoveSlotForm(slot) {
+    function openAdminRemoveSlotForm(slot, dateString) {
         document.getElementById('admin_remove_slot_id').value = slot.slot_id;
+        document.getElementById('adminRemoveSlotTitle').innerText = `Confirm Slot Removal (${dateString})`;
         document.getElementById('adminRemoveSlotDetails').innerText = `Time: ${slot.time}`;
         document.getElementById('adminRemoveSlotModal').style.display = 'block';
     }
 
+    function openAdminSetSlotForm(year, month, day) {
+        const date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        document.getElementById('available_date').value = date;
+        document.getElementById('adminSetSlotTitle').innerText = `Set Available Slot (${date})`;
+        document.getElementById('adminSetSlotModal').style.display = 'block';
+    }
+
     function closeModal(modalId) {
         document.getElementById(modalId).style.display = 'none';
+    }
+
+    function toggleEndDate() {
+        var repeat = document.getElementById("repeat").value;
+        var endDateField = document.getElementById("end_date_field");
+        if (repeat === "none") {
+            endDateField.style.display = "none";
+        } else {
+            endDateField.style.display = "block";
+        }
+    }
+
+    function validateSetSlotForm() {
+        var repeat = document.getElementById("repeat").value;
+        var endDate = document.getElementById("end_date").value;
+        if (repeat !== "none" && endDate === "") {
+            alert("Please provide an end date for the repetition.");
+            return false;
+        }
+        return true;
     }
 
     function cancelReservation(reservationId) {

@@ -46,6 +46,12 @@ nav a:hover {
 
 .day-header {
     font-weight: bold;
+    cursor: pointer;
+}
+
+.day-header:hover {
+    background-color: lightyellow;
+    cursor: pointer;
 }
 
 .slot {

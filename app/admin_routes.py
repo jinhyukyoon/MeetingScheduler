@@ -7,13 +7,6 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-from flask import render_template, request, redirect, url_for, flash
-from app import app, db
-from app.models import CalendarSettings, Reservation
-from app.calendar import delete_event
-import datetime
-import logging
-
 @app.route('/admin')
 def admin():
     available_slots = CalendarSettings.query.all()
