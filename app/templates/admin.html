@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='calendar.css') }}">
+</head>
+<body>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class="flashes">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+    <h1>Admin Dashboard</h1>
+    <h2>Available Slots</h2>
+    {% include 'calendar.html' %}
+    <script id="calendar-data" type="application/json">{{ slots|tojson }}</script>
+    <script id="is-admin" type="application/json">{{ is_admin|tojson|default('false') }}</script>
+    <script src="{{ url_for('static', filename='calendar.js') }}"></script>
+</body>
+</html>

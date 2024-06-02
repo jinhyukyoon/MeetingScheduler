@@ -1,0 +1,88 @@
+<div class="calendar-container">
+    <div class="calendar-header">
+        <button onclick="changeMonth(-1)">Previous</button>
+        <h2 id="calendar-title"></h2>
+        <button onclick="changeMonth(1)">Next</button>
+    </div>
+    <div class="calendar" id="calendar">
+        <!-- Calendar cells will be injected here by JavaScript -->
+    </div>
+</div>
+
+<!-- Reservation Modal for User -->
+<div id="reservationModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('reservationModal')">&times;</span>
+        <h2>Reserve Slot</h2>
+        <form id="reservationForm" method="post" action="/reserve">
+            <input type="hidden" id="datetime" name="datetime">
+            Name: <input type="text" name="name" required><br>
+            Phone: <input type="text" name="phone" required><br>
+            Password: <input type="password" name="password" required><br>
+            <button type="submit">Reserve</button>
+        </form>
+    </div>
+</div>
+
+<!-- Cancel Reservation Modal for User -->
+<div id="cancelModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('cancelModal')">&times;</span>
+        <h2>Cancel Reservation</h2>
+        <form id="cancelForm" method="post" action="/cancel">
+            <input type="hidden" id="cancel_reservation_id" name="reservation_id">
+            Phone: <input type="text" name="phone" required><br>
+            Password: <input type="password" name="password" required><br>
+            <button type="submit">Cancel Reservation</button>
+        </form>
+    </div>
+</div>
+
+<!-- Confirmation Modal for Admin (Cancel Reservation) -->
+<div id="adminCancelModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('adminCancelModal')">&times;</span>
+        <h2>Confirm Cancellation</h2>
+        <p id="adminReservationDetails"></p>
+        <form id="adminCancelForm" method="post" action="/admin/cancel">
+            <input type="hidden" id="admin_cancel_reservation_id" name="reservation_id">
+            <button type="submit">Confirm Cancellation</button>
+        </form>
+    </div>
+</div>
+
+<!-- Confirmation Modal for Admin (Remove Available Slot) -->
+<div id="adminRemoveSlotModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('adminRemoveSlotModal')">&times;</span>
+        <h2 id="adminRemoveSlotTitle">Confirm Slot Removal</h2>
+        <p id="adminRemoveSlotDetails"></p>
+        <form id="adminRemoveSlotForm" method="post" action="/admin/delete_slot">
+            <input type="hidden" id="admin_remove_slot_id" name="slot_id">
+            <button type="submit">Confirm Removal</button>
+        </form>
+    </div>
+</div>
+
+<!-- Set Available Slot Modal for Admin -->
+<div id="adminSetSlotModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('adminSetSlotModal')">&times;</span>
+        <h2 id="adminSetSlotTitle">Set Available Slot</h2>
+        <form id="adminSetSlotForm" method="post" action="/admin/settings" onsubmit="return validateSetSlotForm()">
+            <input type="hidden" id="available_date" name="available_date">
+            Time: <input type="time" name="available_time" required><br>
+            Repeat: 
+            <select name="repeat" id="repeat" onchange="toggleEndDate()">
+                <option value="none">No Repeat</option>
+                <option value="daily">Once a Day (Mon-Fri)</option>
+                <option value="weekly">Once a Week</option>
+                <option value="monthly">Once a Month</option>
+            </select><br>
+            <div id="end_date_field" style="display:none;">
+                End Date for Repetition: <input type="date" name="end_date" id="end_date"><br>
+            </div>
+            <button type="submit">Set</button>
+        </form>
+    </div>
+</div>
