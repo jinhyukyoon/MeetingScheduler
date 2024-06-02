@@ -4,6 +4,62 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentMonth = new Date().getMonth();
     const isAdmin = JSON.parse(document.getElementById('is-admin').textContent);
 
+    // Enforce phone number format as the user types
+    function enforcePhoneNumberFormat(phoneInput) {
+        phoneInput.addEventListener('input', function(event) {
+            let value = phoneInput.value.replace(/-/g, ''); // Remove existing hyphens
+            let formattedValue = '';
+
+            if (event.inputType === 'deleteContentBackward') {
+                // Handle backspace/delete key
+                if (phoneInput.value.endsWith('-')) {
+                    value = value.slice(0, -1); // Remove last character if it's a hyphen
+                }
+            }
+
+            if (value.length <= 3) {
+                formattedValue = value;
+            } else if (value.length <= 7) {
+                formattedValue = value.slice(0, 3) + '-' + value.slice(3);
+            } else {
+                formattedValue = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7);
+            }
+
+            phoneInput.value = formattedValue;
+        });
+
+        phoneInput.addEventListener('keydown', function(event) {
+            let value = phoneInput.value.replace(/-/g, '');
+            if (event.key === 'Backspace' && (value.length === 4 || value.length === 8)) {
+                phoneInput.value = phoneInput.value.slice(0, -1); // Remove the hyphen along with the number
+            }
+        });
+    }
+
+    // Validate phone number format before form submission
+    window.validatePhoneNumber = function() {
+        const phoneInput = document.querySelector('#phone') || document.querySelector('#cancel_phone');
+        const phoneValue = phoneInput.value.replace(/\D/g, '');
+        if (!/^\d{10,11}$/.test(phoneValue)) {
+            alert('Please enter a valid phone number in the format 010-1234-5678.');
+            return false;
+        }
+        // Convert phone number to 00000000000 format
+        phoneInput.value = phoneValue;
+        return true;
+    }
+
+    const phoneInput = document.getElementById('phone');
+    const cancelPhoneInput = document.getElementById('cancel_phone');
+    if (phoneInput) {
+        enforcePhoneNumberFormat(phoneInput);
+    }
+    if (cancelPhoneInput) {
+        enforcePhoneNumberFormat(cancelPhoneInput);
+    }
+
+    // Existing code for calendar functions...
+
     window.changeMonth = function(delta) {
         currentMonth += delta;
         if (currentMonth < 0) {

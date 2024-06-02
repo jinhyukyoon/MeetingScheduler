@@ -27,7 +27,7 @@
 }
 
 .day-header.clickable:hover {
-    background-color: lightyellow;
+    background-color: yellow;
     cursor: pointer;
 }
 

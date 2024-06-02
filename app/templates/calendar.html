@@ -14,10 +14,10 @@
     <div class="modal-content">
         <span class="close" onclick="closeModal('reservationModal')">&times;</span>
         <h2>Reserve Slot</h2>
-        <form id="reservationForm" method="post" action="/reserve">
+        <form id="reservationForm" method="post" action="/reserve" onsubmit="return validatePhoneNumber()">
             <input type="hidden" id="datetime" name="datetime">
             Name: <input type="text" name="name" required><br>
-            Phone: <input type="text" name="phone" required><br>
+            Phone: <input type="text" name="phone" id="phone" placeholder="010-1234-5678" required><br>
             Password: <input type="password" name="password" required><br>
             <button type="submit">Reserve</button>
         </form>
@@ -29,9 +29,9 @@
     <div class="modal-content">
         <span class="close" onclick="closeModal('cancelModal')">&times;</span>
         <h2>Cancel Reservation</h2>
-        <form id="cancelForm" method="post" action="/cancel">
+        <form id="cancelForm" method="post" action="/cancel" onsubmit="return validatePhoneNumber()">
             <input type="hidden" id="cancel_reservation_id" name="reservation_id">
-            Phone: <input type="text" name="phone" required><br>
+            Phone: <input type="text" name="phone" id="cancel_phone" placeholder="010-1234-5678" required><br>
             Password: <input type="password" name="password" required><br>
             <button type="submit">Cancel Reservation</button>
         </form>

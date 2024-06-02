@@ -2,9 +2,13 @@ from flask import render_template, request, redirect, url_for, flash
 from app import app, db
 from app.models import CalendarSettings, Reservation
 from app.google_calendar import create_google_calendar_event, delete_google_calendar_event
+from app.cool_sms import send_sms
 import datetime, logging
 
 logging.basicConfig(level=logging.INFO)
+
+def format_phone_number(phone):
+    return phone.replace("-", "")
 
 @app.route('/')
 def index():
@@ -68,11 +72,11 @@ def reserve():
             flash('Failed to create calendar event.')
             return redirect(url_for('index'))
 
-        # # Send SMS to user
-        # try:
-        #     send_sms(phone, f'Reservation confirmed for {datetime_str}')
-        # except Exception as e:
-        #     logging.error(f"Error sending SMS: {e}")
+        # Send SMS to user
+        try:
+            send_sms(format_phone_number(phone), f'Reservation confirmed for {datetime_str}')
+        except Exception as e:
+            logging.error(f"Error sending SMS: {e}")
 
         # TODO: Send KakaoTalk message to admin
 
@@ -106,11 +110,11 @@ def cancel():
             slot_to_update.reserved = False
             db.session.commit()
 
-        # # Send SMS to user
-        # try:
-        #     send_sms(reservation.phone, 'Your reservation has been canceled.')
-        # except Exception as e:
-        #     logging.error(f"Error sending SMS: {e}")
+        # Send SMS to user
+        try:
+            send_sms(format_phone_number(reservation.phone), 'Your reservation has been canceled.')
+        except Exception as e:
+            logging.error(f"Error sending SMS: {e}")
 
         # TODO: Send KakaoTalk message to admin
 

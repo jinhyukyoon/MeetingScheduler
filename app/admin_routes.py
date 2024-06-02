@@ -2,9 +2,13 @@ from flask import render_template, request, redirect, url_for, flash
 from app import app, db
 from app.models import CalendarSettings, Reservation
 from app.google_calendar import delete_google_calendar_event
+from app.cool_sms import send_sms
 import datetime, logging
 
 logging.basicConfig(level=logging.INFO)
+
+def format_phone_number(phone):
+    return phone.replace("-", "")
 
 @app.route('/admin')
 def admin():
@@ -85,11 +89,11 @@ def admin_cancel():
         if reservation.event_id:
             delete_google_calendar_event(reservation.event_id)
 
-        # # Send SMS to user
-        # try:
-        #     send_sms(reservation.phone, 'Your reservation has been canceled by admin.')
-        # except Exception as e:
-        #     logging.error(f"Error sending SMS: {e}")
+        # Send SMS to user
+        try:
+            send_sms(format_phone_number(reservation.phone), 'Your reservation has been canceled by admin.')
+        except Exception as e:
+            logging.error(f"Error sending SMS: {e}")
 
         # TODO: Send KakaoTalk message to admin
 
