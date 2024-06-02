@@ -1,9 +1,8 @@
 from flask import render_template, request, redirect, url_for, flash
 from app import app, db
 from app.models import CalendarSettings, Reservation
-from app.calendar import delete_event
-import datetime
-import logging
+from app.google_calendar import delete_google_calendar_event
+import datetime, logging
 
 logging.basicConfig(level=logging.INFO)
 
@@ -84,7 +83,7 @@ def admin_cancel():
 
         # Delete the event from Google Calendar
         if reservation.event_id:
-            delete_event(reservation.event_id)
+            delete_google_calendar_event(reservation.event_id)
 
         # # Send SMS to user
         # try:

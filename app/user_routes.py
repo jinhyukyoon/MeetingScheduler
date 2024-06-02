@@ -1,18 +1,10 @@
 from flask import render_template, request, redirect, url_for, flash
 from app import app, db
 from app.models import CalendarSettings, Reservation
-from app.calendar import create_event, delete_event
-import datetime
-import logging
+from app.google_calendar import create_google_calendar_event, delete_google_calendar_event
+import datetime, logging
 
 logging.basicConfig(level=logging.INFO)
-
-from flask import render_template, request, redirect, url_for, flash
-from app import app, db
-from app.models import CalendarSettings, Reservation
-from app.calendar import create_event, delete_event
-import datetime
-import logging
 
 @app.route('/')
 def index():
@@ -65,7 +57,7 @@ def reserve():
             db.session.commit()
 
         # Create event in Google Calendar
-        event = create_event(name, reservation_datetime.isoformat(), (reservation_datetime + datetime.timedelta(hours=1)).isoformat())
+        event = create_google_calendar_event(name, reservation_datetime.isoformat(), (reservation_datetime + datetime.timedelta(hours=1)).isoformat())
         if event:
             logging.info(f"Reservation event created: {event.get('htmlLink')}")
             reservation.event_id = event.get('id')  # Store the event ID
@@ -106,7 +98,7 @@ def cancel():
 
         # Delete the event from Google Calendar
         if reservation.event_id:
-            delete_event(reservation.event_id)
+            delete_google_calendar_event(reservation.event_id)
         
         # Update the slot to show it is available again
         slot_to_update = CalendarSettings.query.filter_by(available_date=reservation.datetime.date(), available_time=reservation.datetime.time()).first()

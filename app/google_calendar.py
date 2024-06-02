@@ -12,7 +12,7 @@ service = build('calendar', 'v3', credentials=credentials)
 
 logging.basicConfig(level=logging.INFO)
 
-def create_event(summary, start_time, end_time, calendar_id='jinhyuk.a.yoon@gmail.com'):
+def create_google_calendar_event(summary, start_time, end_time, calendar_id='jinhyuk.a.yoon@gmail.com'):
     event = {
         'summary': summary,
         'start': {'dateTime': start_time, 'timeZone': 'Asia/Seoul'},
@@ -26,7 +26,7 @@ def create_event(summary, start_time, end_time, calendar_id='jinhyuk.a.yoon@gmai
         logging.error(f"Error creating event: {e}")
         return None
 
-def delete_event(event_id, calendar_id='jinhyuk.a.yoon@gmail.com'):
+def delete_google_calendar_event(event_id, calendar_id='jinhyuk.a.yoon@gmail.com'):
     try:
         service.events().delete(calendarId=calendar_id, eventId=event_id).execute()
         logging.info(f"Event deleted: {event_id}")
