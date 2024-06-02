@@ -7,6 +7,13 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
+from flask import render_template, request, redirect, url_for, flash
+from app import app, db
+from app.models import CalendarSettings, Reservation
+from app.calendar import delete_event
+import datetime
+import logging
+
 @app.route('/admin')
 def admin():
     available_slots = CalendarSettings.query.all()
@@ -19,10 +26,12 @@ def admin():
         slots_by_date[date_str].append({
             'time': slot.available_time.strftime('%H:%M:%S'),
             'reserved': reservation is not None,
-            'reservation_id': reservation.id if reservation else None
+            'name': reservation.name if reservation else None,
+            'phone': reservation.phone if reservation else None,
+            'reservation_id': reservation.id if reservation else None,
+            'slot_id': slot.id
         })
-    reservations = Reservation.query.all()
-    return render_template('admin.html', reservations=reservations, slots=slots_by_date, is_admin=True)
+    return render_template('admin.html', slots=slots_by_date, is_admin=True)
 
 @app.route('/admin/settings', methods=['POST'])
 def admin_settings():

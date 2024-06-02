@@ -9,6 +9,61 @@
     </div>
 </div>
 
+<!-- Reservation Modal for User -->
+<div id="reservationModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('reservationModal')">&times;</span>
+        <h2>Reserve Slot</h2>
+        <form id="reservationForm" method="post" action="/reserve">
+            <input type="hidden" id="datetime" name="datetime">
+            Name: <input type="text" name="name" required><br>
+            Phone: <input type="text" name="phone" required><br>
+            Password: <input type="password" name="password" required><br>
+            <button type="submit">Reserve</button>
+        </form>
+    </div>
+</div>
+
+<!-- Cancel Reservation Modal for User -->
+<div id="cancelModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('cancelModal')">&times;</span>
+        <h2>Cancel Reservation</h2>
+        <form id="cancelForm" method="post" action="/cancel">
+            <input type="hidden" id="cancel_reservation_id" name="reservation_id">
+            Phone: <input type="text" name="phone" required><br>
+            Password: <input type="password" name="password" required><br>
+            <button type="submit">Cancel Reservation</button>
+        </form>
+    </div>
+</div>
+
+<!-- Confirmation Modal for Admin (Cancel Reservation) -->
+<div id="adminCancelModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('adminCancelModal')">&times;</span>
+        <h2>Confirm Cancellation</h2>
+        <p id="adminReservationDetails"></p>
+        <form id="adminCancelForm" method="post" action="/admin/cancel">
+            <input type="hidden" id="admin_cancel_reservation_id" name="reservation_id">
+            <button type="submit">Confirm Cancellation</button>
+        </form>
+    </div>
+</div>
+
+<!-- Confirmation Modal for Admin (Remove Available Slot) -->
+<div id="adminRemoveSlotModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('adminRemoveSlotModal')">&times;</span>
+        <h2>Confirm Slot Removal</h2>
+        <p id="adminRemoveSlotDetails"></p>
+        <form id="adminRemoveSlotForm" method="post" action="/admin/delete_slot">
+            <input type="hidden" id="admin_remove_slot_id" name="slot_id">
+            <button type="submit">Confirm Removal</button>
+        </form>
+    </div>
+</div>
+
 <script>
     const slots = {{ slots|tojson }};
     let currentYear = new Date().getFullYear();
@@ -60,16 +115,20 @@
                 slots[dateString].forEach(slot => {
                     const slotDiv = document.createElement('div');
                     slotDiv.classList.add('slot');
-                    slotDiv.textContent = slot.time;
+                    slotDiv.textContent = `${slot.time} ${slot.reserved ? `(${slot.name})` : ''}`;
                     slotDiv.title = slot.reserved ? 'Reserved' : 'Available';
                     if (slot.reserved) {
                         slotDiv.classList.add('reserved');
                         if (isAdmin) {
-                            slotDiv.onclick = () => cancelReservation(slot.reservation_id);
+                            slotDiv.onclick = () => openAdminCancelForm(slot);
+                        } else {
+                            slotDiv.onclick = () => openCancelForm(slot.reservation_id);
                         }
                     } else {
-                        if (!isAdmin) {
-                            slotDiv.onclick = () => reserveSlot(dateString, slot.time);
+                        if (isAdmin) {
+                            slotDiv.onclick = () => openAdminRemoveSlotForm(slot);
+                        } else {
+                            slotDiv.onclick = () => openReservationForm(dateString, slot.time);
                         }
                     }
                     cell.appendChild(slotDiv);
@@ -80,39 +139,31 @@
         }
     }
 
-    function reserveSlot(date, time) {
+    function openReservationForm(date, time) {
         const datetime = `${date}T${time}`;
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/reserve';
-        form.style.display = 'none';
+        document.getElementById('datetime').value = datetime;
+        document.getElementById('reservationModal').style.display = 'block';
+    }
 
-        const datetimeInput = document.createElement('input');
-        datetimeInput.name = 'datetime';
-        datetimeInput.value = datetime;
-        form.appendChild(datetimeInput);
+    function openCancelForm(reservationId) {
+        document.getElementById('cancel_reservation_id').value = reservationId;
+        document.getElementById('cancelModal').style.display = 'block';
+    }
 
-        const name = prompt("Enter your name:");
-        const phone = prompt("Enter your phone:");
-        const password = prompt("Enter a password:");
+    function openAdminCancelForm(slot) {
+        document.getElementById('admin_cancel_reservation_id').value = slot.reservation_id;
+        document.getElementById('adminReservationDetails').innerText = `Name: ${slot.name}\nPhone: ${slot.phone}\nTime: ${slot.time}`;
+        document.getElementById('adminCancelModal').style.display = 'block';
+    }
 
-        const nameInput = document.createElement('input');
-        nameInput.name = 'name';
-        nameInput.value = name;
-        form.appendChild(nameInput);
+    function openAdminRemoveSlotForm(slot) {
+        document.getElementById('admin_remove_slot_id').value = slot.slot_id;
+        document.getElementById('adminRemoveSlotDetails').innerText = `Time: ${slot.time}`;
+        document.getElementById('adminRemoveSlotModal').style.display = 'block';
+    }
 
-        const phoneInput = document.createElement('input');
-        phoneInput.name = 'phone';
-        phoneInput.value = phone;
-        form.appendChild(phoneInput);
-
-        const passwordInput = document.createElement('input');
-        passwordInput.name = 'password';
-        passwordInput.value = password;
-        form.appendChild(passwordInput);
-
-        document.body.appendChild(form);
-        form.submit();
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
     }
 
     function cancelReservation(reservationId) {

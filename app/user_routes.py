@@ -7,6 +7,13 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
+from flask import render_template, request, redirect, url_for, flash
+from app import app, db
+from app.models import CalendarSettings, Reservation
+from app.calendar import create_event, delete_event
+import datetime
+import logging
+
 @app.route('/')
 def index():
     available_slots = CalendarSettings.query.all()
@@ -19,6 +26,8 @@ def index():
         slots_by_date[date_str].append({
             'time': slot.available_time.strftime('%H:%M:%S'),
             'reserved': reservation is not None,
+            'name': reservation.name if reservation else None,
+            'phone': reservation.phone if reservation else None,
             'reservation_id': reservation.id if reservation else None
         })
     return render_template('index.html', slots=slots_by_date, is_admin=False)
@@ -85,10 +94,11 @@ def reserve():
 @app.route('/cancel', methods=['POST'])
 def cancel():
     reservation_id = request.form['reservation_id']
+    phone = request.form['phone']
     password = request.form['password']
     reservation = Reservation.query.get(reservation_id)
 
-    if reservation and reservation.password == password:
+    if reservation and reservation.phone == phone and reservation.password == password:
         reservation.status = 'canceled'
         reservation.canceled_at = datetime.datetime.utcnow()
         reservation.canceled_by = 'user'
@@ -114,6 +124,6 @@ def cancel():
 
         flash('Reservation canceled.')
     else:
-        flash('Invalid reservation or password.')
+        flash('Invalid phone number or password.')
 
     return redirect(url_for('index'))
